@@ -3,6 +3,8 @@ sysinternals for psexec https://technet.microsoft.com/en-us/sysinternals/bb84206
 System doesn't have access to all regkeys, This may be OK and we can jsut hide the errors
 Files in use cannot be hashed, this may be OK and we can hide errors
 The Write-Progress indicators need to be tweaked
+The Entire Process takes about 20 minutes.. we might need to find a way to streamline it
+We might now be able to compare the registry keys in the current format.. need to look into this
 #> 
 
 Function Get-PowerShot
