@@ -9,7 +9,7 @@ $registryFolders = (Get-ChildItem -Path Registry::*).Name
 
 foreach ($regFolder in $registryFolders) {
 $regDir = "Registry::"+$regFolder 
-Get-ChildItem -Path $regDir -Recurse | Out-File registryshot.reg}
+Get-ChildItem -Path $regDir -Recurse | Out-File -Append registryshot.reg}
 
 Get-ChildItem -Recurse | Get-FileHash -Algorithm MD5 | Out-File -Append filehashes.txt
 }
