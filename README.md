@@ -37,3 +37,4 @@ Technical notes:
 
 Needed and recomended packages
 Powershell 5 https://www.microsoft.com/en-us/download/details.aspx?id=48729
+Sysinternals : Included *recomended to run as system
