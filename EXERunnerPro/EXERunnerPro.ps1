@@ -40,7 +40,7 @@ param([string]$rootDir , #Folder to recurcivly serach
 
     #Numerate through folders and files
     $iFolder = 0 #Seed value for foreach loop
-    $rootItems = Get-ChildItem $rootDir  #All files and folders in the top level directory given
+    $rootItems = Get-ChildItem $rootDir -erroraction 'silentlycontinue'   #All files and folders in the top level directory given
 	foreach ($rootItem in $rootItems) {   #Iterate through all items (files and folders) in given root directory 
         Write-Progress -Id 0 -Activity "Filesystem Snapshot" -Status "Processing $rootItem" -PercentComplete ($iFolder /$rootItems.count * 100); $iFolder++ #Update Progressbar
         foreach ($file in (Get-ChildItem -Path $rootItem.FullName -recurse )) {
@@ -61,12 +61,12 @@ param([string]$rootDir , #Folder to recurcivly serach
 
 function Retrieve-NonMACMetrics {
     param($hash)  #hashtable that contains objects
-    return @((($hash.Values[0] | Get-Member -MemberType NoteProperty).name) | Where-Object {$_ -NotLike "Time*"})  #Only get non-time related metrics
+    return @((($hash.Values[0] | Get-Member -MemberType NoteProperty -erroraction 'silentlycontinue').name) | Where-Object {$_ -NotLike "Time*"})  #Only get non-time related metrics
 }
 
 function Retrieve-MACMetrics {
     param($hash)  #hashtable that contains objects
-    return @((($hash.Values[0] | Get-Member -MemberType NoteProperty).name) | Where-Object {$_ -Like "Time*"})  #Only get non-time related metrics
+    return @((($hash.Values[0] | Get-Member -MemberType NoteProperty -erroraction 'silentlycontinue').name) | Where-Object {$_ -Like "Time*"})  #Only get non-time related metrics
 }
 
 function Get-PowerArtifact {
@@ -213,7 +213,7 @@ do {
         $program = Read-Host "`nPlease enter name of program as it appears in the name of the xml file (ex: chrome_ver46.0.2490)"
 
         #remove extension if user added it
-        if($program -like '*.xml') {$artifacts = $artifacts.SubString( 0, ($artifacts.Length-4))}
+        #if($program -like '*.xml') {$artifacts = $artifacts.SubString( 0, ($artifacts.Length-4))}
 
         #Read in artifact file(s)
         $artifacts    #Initializing variable
