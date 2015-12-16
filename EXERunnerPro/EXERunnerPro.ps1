@@ -8,18 +8,34 @@ param([string]$rootDir , #Folder to recurcivly serach
     $results    = @{} #Array to hold the results of getting data on files/folders
 
     if($getReg) { #only do the registry items if specified
+        #Currently takes 2 full hours
+        #Throws 2 errors: "get-itemproperty: specified cast is not valid"
+        #No progress bar
         $registryFolders = (Get-ChildItem -Path Registry::*).Name  #get all registry hives
-        $iReg = 1 #Seed value for foreach loop
-    
-        foreach ($regFolder in $registryFolders[0]) {  #debug Should not be index 0, should be entire array
-	        Write-Progress -Id 0 -Activity "Registry Snapshot" -Status "Exporting $regFolder" -PercentComplete ($iReg / $registryFolders.count * 100);$iReg++ #Update Progressbar
+        $registryFolders = "HKEY_CURRENT_USER" #debug
+        foreach ($regFolder in $registryFolders) {  #debug Should not be index 0, should be entire array
+	        #Write-Progress -Id 0 -Activity "Registry Snapshot" -Status "Exporting $regFolder" -PercentComplete ($iReg / $registryFolders.count * 100);$iReg++ #Update Progressbar
+            $regFolder = 'Registry::'+$regFolder+'\' #add Registry:: \ as it needs it to get child item
+            $reglist = get-childitem -path $regFolder -Recurse -erroraction silentlycontinue #get all the registry keys and name
+            foreach ($regPath in $reglist){ #cycle through each reg key
+                $fullPath = 'Registry::'+$regPath+'\' #add Registry:: \
+                $regData = Get-ItemProperty $fullPath -erroraction silentlycontinue #get the data from the key
+                $regData = hash(out-string -inputobject $regData) #hash the data
+                $object = New-Object –TypeName PSObject  #Object to hold information on file/folder
+                #$object | Add-Member –MemberType NoteProperty –Name FullPath –Value $file.FullName
+                $object | Add-Member –MemberType NoteProperty –Name SHA256          –Value $regData
+                $regresults.add($regPath.Name, $object) #append the results
+            }
+              
+             ##Old Registry snap process using regedit  
+            <#
             regedit /e ./$regFolder.reg "$regFolder" | out-null #Export Hive
             $reg = Get-Content ./$regFolder.reg | Select -skip 2
             $finalitem = ""
             $key = ""
             $iItems=0
             foreach ($item in $reg){
-                Write-Progress -Id 1 -ParentId 0 -Activity "Registry Snapshot" -Status "Comparing $item" -PercentComplete ($iItems / $reg.TotalCount * 100);$iItems++ #Update Progressbar
+                #Write-Progress -Id 1 -ParentId 0 -Activity "Registry Snapshot" -Status "Comparing $item" -PercentComplete ($iItems / $reg.TotalCount * 100);$iItems++ #Update Progressbar
 
                 if ($item -notmatch '\[HKEY' -and $item -notmatch "`n`r"){
                         $finalitem += $item
@@ -32,10 +48,10 @@ param([string]$rootDir , #Folder to recurcivly serach
                 elseif($item -match '\[HKEY'){
                     $key = $item 
                     $finalitem = ""
-                }
+                }          
+#>
             }
         }
-    }
 	
 
     #Numerate through folders and files
@@ -57,6 +73,18 @@ param([string]$rootDir , #Folder to recurcivly serach
     }
 
 	return ($results,$regresults)
+}
+
+function Hash($text) #Thank you http://blogs.msdn.com/b/luc/archive/2011/01/21/powershell-getting-the-hash-value-for-a-string.aspx
+{
+    $hasher = new-object System.Security.Cryptography.SHA256Managed
+    $toHash = [System.Text.Encoding]::UTF8.GetBytes($text)
+    $hashByteArray = $hasher.ComputeHash($toHash)
+    foreach($byte in $hashByteArray)
+    {
+         $res += $byte.ToString()
+    }
+    return $res;
 }
 
 function Retrieve-NonMACMetrics {
@@ -182,7 +210,7 @@ do {
         ($shot1,$shot1_reg) = Get-PowerShot -rootDir $rootDir -getReg $getReg
 
         #Prompt user to install the program and to press enter when the program is installed
-        Write-Host "`nSnapshot finished, please install $outfile then press enter to continue"; pause
+        Write-Host "`nSnapshot finished, please install $outfile then press enter to continue`n`n`n"; pause
     
         #Get second snapshot for after the program has been installed
         ($shot2,$shot2_reg) = Get-PowerShot -rootDir $rootDir -getReg $getReg
@@ -199,7 +227,7 @@ do {
             $artifacts = Get-PowerArtifact -hash1 $shot1_reg -hash2 $shot2_reg
             $exportPathReg = ('.\artifacts\' + $outfile + "_reg.xml")
             Write-Host "Exporting to $exportPathReg"
-            $artifacts | export-clixml -path 
+            $artifacts | export-clixml -path $exportPathReg
         }
     }
 
