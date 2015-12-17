@@ -12,7 +12,7 @@ param([string]$rootDir , #Folder to recurcivly serach
         #Throws 2 errors: "get-itemproperty: specified cast is not valid"
         #No progress bar
         $registryFolders = (Get-ChildItem -Path Registry::*).Name  #get all registry hives
-        $registryFolders = "HKEY_CURRENT_USER" #debug
+        #$registryFolders = "HKEY_CURRENT_USER" #debug
         foreach ($regFolder in $registryFolders) {  #debug Should not be index 0, should be entire array
 	        #Write-Progress -Id 0 -Activity "Registry Snapshot" -Status "Exporting $regFolder" -PercentComplete ($iReg / $registryFolders.count * 100);$iReg++ #Update Progressbar
             $regFolder = 'Registry::'+$regFolder+'\' #add Registry:: \ as it needs it to get child item
@@ -21,8 +21,7 @@ param([string]$rootDir , #Folder to recurcivly serach
                 $fullPath = 'Registry::'+$regPath+'\' #add Registry:: \
                 $regData = Get-ItemProperty $fullPath -erroraction silentlycontinue #get the data from the key
                 $regData = hash(out-string -inputobject $regData) #hash the data
-                $object = New-Object –TypeName PSObject  #Object to hold information on file/folder
-                #$object | Add-Member –MemberType NoteProperty –Name FullPath –Value $file.FullName
+                $object = New-Object –TypeName PSObject  #Object to hold information on the hash
                 $object | Add-Member –MemberType NoteProperty –Name SHA256          –Value $regData
                 $regresults.add($regPath.Name, $object) #append the results
             }
